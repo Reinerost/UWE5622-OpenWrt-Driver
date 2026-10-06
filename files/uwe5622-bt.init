@@ -1,0 +1,57 @@
+#!/bin/sh /etc/rc.common
+
+START=60
+STOP=20
+USE_PROCD=1
+
+find_uwe_rfkill()
+{
+	local r
+
+	for r in /sys/class/rfkill/rfkill*; do
+		[ -e "$r/name" ] || continue
+
+		[ "$(cat "$r/type" 2>/dev/null)" = "bluetooth" ] || continue
+		[ "$(cat "$r/name" 2>/dev/null)" = "bluetooth" ] || continue
+
+		echo "$r"
+		return 0
+	done
+
+	return 1
+}
+
+start_service()
+{
+	local rfkill
+
+	[ -c /dev/ttyBT0 ] || {
+		logger -t uwe5622-bt "ttyBT0 not found"
+		return 1
+	}
+
+	rfkill="$(find_uwe_rfkill)" || {
+		logger -t uwe5622-bt "Bluetooth rfkill device not found"
+		return 1
+	}
+
+	# This synchronously powers the UWE5622 Bluetooth subsystem and
+	# performs the FCA0/FCA2/FCA1 vendor initialization in the driver.
+	echo 1 > "$rfkill/state" || {
+		logger -t uwe5622-bt "failed to enable Bluetooth"
+		return 1
+	}
+
+	procd_open_instance
+	procd_set_param command /usr/bin/btattach -B /dev/ttyBT0 -P h4
+	procd_set_param respawn
+	procd_close_instance
+}
+
+stop_service()
+{
+	local rfkill
+
+	rfkill="$(find_uwe_rfkill)" || return 0
+	echo 0 > "$rfkill/state"
+}

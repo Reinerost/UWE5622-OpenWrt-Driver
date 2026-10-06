@@ -1,0 +1,28 @@
+# Linux kernel / Kbuild artifacts
+*.o
+*.ko
+*.mod
+*.mod.c
+*.cmd
+*.order
+*.symvers
+
+# Kbuild generated files
+.tmp_versions/
+.*.cmd
+
+# Editor / backup files
+*~
+*.swp
+*.swo
+
+# OpenWrt package build artifacts
+.built
+.built_check
+.configured_*
+.dep_files
+.prepared_*
+.pkgdir/
+ipkg-*/
+Module.symvers.tmp
+sprd_bt_init
